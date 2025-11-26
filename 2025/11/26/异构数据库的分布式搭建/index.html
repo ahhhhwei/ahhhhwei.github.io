@@ -1,0 +1,813 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.ico">
+  <link rel="icon" href="/img/favicon.ico">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="ahwei">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="分布式数据库配置水平分片一、实验方案shardingsphere 作为逻辑数据库，实际的物理数据库由 MySQL 和 openGauss 组成。其中，shardingsphere 安装在宿主机上，两个物理数据库由 docker 来构建。 二、搭建1.安装 ShardingSphere-Proxy我们通过二进制发布包的方式安装，我下载的是5.3.2，注意版本号，不同版本之间的配置不同： 点击 链接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="异构数据库的分布式搭建">
+<meta property="og:url" content="http://example.com/2025/11/26/%E5%BC%82%E6%9E%84%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="阿伟的博客网站">
+<meta property="og:description" content="分布式数据库配置水平分片一、实验方案shardingsphere 作为逻辑数据库，实际的物理数据库由 MySQL 和 openGauss 组成。其中，shardingsphere 安装在宿主机上，两个物理数据库由 docker 来构建。 二、搭建1.安装 ShardingSphere-Proxy我们通过二进制发布包的方式安装，我下载的是5.3.2，注意版本号，不同版本之间的配置不同： 点击 链接">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/%E5%BC%82%E6%9E%84%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%90%AD%E5%BB%BA/shardingsphere.jpg">
+<meta property="article:published_time" content="2025-11-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-11-26T07:39:24.475Z">
+<meta property="article:author" content="ahwei">
+<meta property="article:tag" content="database">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/%E5%BC%82%E6%9E%84%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%90%AD%E5%BB%BA/shardingsphere.jpg">
+  
+  
+  
+  <title>异构数据库的分布式搭建 - 阿伟的博客网站</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null},"gtag":null,"woyaola":null,"cnzz":null},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>阿伟的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/karigurashi022.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="异构数据库的分布式搭建"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-11-26 00:00" pubdate>
+          2025年11月26日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          1.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">异构数据库的分布式搭建</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="分布式数据库配置水平分片"><a href="#分布式数据库配置水平分片" class="headerlink" title="分布式数据库配置水平分片"></a>分布式数据库配置水平分片</h1><h2 id="一、实验方案"><a href="#一、实验方案" class="headerlink" title="一、实验方案"></a>一、实验方案</h2><p>shardingsphere 作为逻辑数据库，实际的物理数据库由 MySQL 和 openGauss 组成。其中，shardingsphere 安装在宿主机上，两个物理数据库由 docker 来构建。</p>
+<h2 id="二、搭建"><a href="#二、搭建" class="headerlink" title="二、搭建"></a>二、搭建</h2><h3 id="1-安装-ShardingSphere-Proxy"><a href="#1-安装-ShardingSphere-Proxy" class="headerlink" title="1.安装 ShardingSphere-Proxy"></a>1.安装 ShardingSphere-Proxy</h3><p>我们通过二进制发布包的方式安装，我下载的是5.3.2，注意版本号，不同版本之间的配置不同：</p>
+<p>点击 <a target="_blank" rel="noopener" href="https://archive.apache.org/dist/shardingsphere/5.3.2/">链接</a> 后，选择93M那个：</p>
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/93M.png" srcset="/img/loading.gif" lazyload></p>
+<p>上传至服务器解压安装：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">解压</span><br>tar -zxvf apache-shardingsphere-5.3.2-shardingsphere-proxy-bin.tar.gz<br><span class="hljs-meta prompt_"># </span><span class="language-bash">重命名⽬录</span><br>mv apache-shardingsphere-5.3.2-shardingsphere-proxy-bin shardingsphere-proxy<br><span class="hljs-meta prompt_"># </span><span class="language-bash">如果没有 java 运行时环境，这里要安装一下</span><br></code></pre></td></tr></table></figure>
+
+<p>进入 bin&#x2F; 目录：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">启动</span><br>./start.sh<br><span class="hljs-meta prompt_"># </span><span class="language-bash">停止</span><br>./stop.sh<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-docker-启动-MySQL和-openGauss-数据库"><a href="#2-docker-启动-MySQL和-openGauss-数据库" class="headerlink" title="2.docker 启动 MySQL和 openGauss 数据库"></a>2.docker 启动 MySQL和 openGauss 数据库</h3><h4 id="2-1-换源"><a href="#2-1-换源" class="headerlink" title="2.1 换源"></a>2.1 换源</h4><p>如果下面的步骤 2.1、2.2 拉取超时，可以换国内的源：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">vim /etc/docker/daemon.json<br></code></pre></td></tr></table></figure>
+
+<p>vim 打开 <code>daemon.json</code>，按 <code>i</code> 进入插入模式，把里面的内容替换为下面的：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;registry-mirrors&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>    <span class="hljs-string">&quot;https://docker.1ms.run&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://docker.mybacc.com&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://dytt.online&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://lispy.org&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://docker.xiaogenban1993.com&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://docker.yomansunter.com&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://aicarbon.xyz&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://666860.xyz&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://docker.zhai.cm&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://a.ussh.net&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://hub.littlediary.cn&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://hub.rat.dev&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-string">&quot;https://docker.m.daocloud.io&quot;</span><br>  <span class="hljs-punctuation">]</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>按 <code>Esc</code> 切换到普通模式，按 <code>:</code> 切换到底行模式，输入 <code>wq</code> 保存并退出。</p>
+<h4 id="2-1-启动-MySQL"><a href="#2-1-启动-MySQL" class="headerlink" title="2.1 启动 MySQL"></a>2.1 启动 MySQL</h4><blockquote>
+<p>注意先启动 docker</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">systemctl start docker<br></code></pre></td></tr></table></figure>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker run -d \<br>  -p 13306:3306 \<br>  -v /ahwei/mysql/order0/conf:/etc/mysql/conf.d \<br>  -v /ahwei/mysql/order0/mysql:/var/lib/mysql \<br>  -e MYSQL_ROOT_PASSWORD=123456 \<br>  --name ahwei_db0 \<br>  --restart always \<br>  mysql:8.0.38<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-2-启动-openGauss"><a href="#2-2-启动-openGauss" class="headerlink" title="2.2 启动 openGauss"></a>2.2 启动 openGauss</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker run -d \<br>  -p 15432:5432 \<br>  -v /ahwei/opengauss/order1/data:/var/lib/opengauss \<br>  -e GS_PASSWORD=Ahwei@123 \<br>  -e GS_NODENAME=ahwei_db1 \<br>  -e GS_USER=omm \<br>  -e GS_DB=postgres \<br>  --name ahwei_db1 \<br>  --privileged=true \<br>  --restart=always \<br>  opengauss/opengauss-server:latest<br></code></pre></td></tr></table></figure>
+
+<p>此时，命令行输入 <code>docker ps</code>，发现两个容器都在正常运行：</p>
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/docker-ps.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="3-配置水平分片"><a href="#3-配置水平分片" class="headerlink" title="3. 配置水平分片"></a>3. 配置水平分片</h3><p>配置水平分片时，仅需要配置 config-sharding.yaml 和 server.yaml。</p>
+<h4 id="3-1-配置-config-sharding-yaml"><a href="#3-1-配置-config-sharding-yaml" class="headerlink" title="3.1 配置 config-sharding.yaml"></a>3.1 配置 config-sharding.yaml</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">authority:</span><br>  <span class="hljs-attr">users:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">user:</span> <span class="hljs-string">root@%</span><br>      <span class="hljs-attr">password:</span> <span class="hljs-number">123456</span><br>  <span class="hljs-attr">privilege:</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">ALL_PERMITTED</span><br><br><span class="hljs-attr">props:</span><br>  <span class="hljs-attr">sql-show:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-配置-server-yaml"><a href="#3-2-配置-server-yaml" class="headerlink" title="3.2 配置 server.yaml"></a>3.2 配置 server.yaml</h4><blockquote>
+<p><code>ip</code> 地址需要查询：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker inspect -f &#x27;&#123;&#123; .NetworkSettings.IPAddress &#125;&#125;&#x27; ahwei_db0<br>docker inspect -f &#x27;&#123;&#123; .NetworkSettings.IPAddress &#125;&#125;&#x27; ahwei_db1<br></code></pre></td></tr></table></figure>
+
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/%E6%9F%A5%E8%AF%A2ip.png" srcset="/img/loading.gif" lazyload></p>
+</blockquote>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 逻辑数据库</span><br><span class="hljs-attr">databaseName:</span> <span class="hljs-string">wenjw_db</span><br><br><span class="hljs-comment"># 数据源配置：1个MySQL + 1个OpenGauss</span><br><span class="hljs-attr">dataSources:</span><br>  <span class="hljs-comment"># MySQL数据源</span><br>  <span class="hljs-attr">wenjw_db0:</span><br>    <span class="hljs-attr">url:</span> <span class="hljs-string">jdbc:mysql://172.17.0.2:3306/wenjw_db0?serverTimezone=UTC&amp;useSSL=false&amp;characterEncoding=utf8&amp;allowPublicKeyRetrieval=true</span><br>    <span class="hljs-attr">username:</span> <span class="hljs-string">root</span><br>    <span class="hljs-attr">password:</span> <span class="hljs-number">123456</span><br>    <span class="hljs-attr">connectionTimeoutMilliseconds:</span> <span class="hljs-number">30000</span><br>    <span class="hljs-attr">idleTimeoutMilliseconds:</span> <span class="hljs-number">60000</span><br>    <span class="hljs-attr">maxLifetimeMilliseconds:</span> <span class="hljs-number">1800000</span><br>    <span class="hljs-attr">maxPoolSize:</span> <span class="hljs-number">50</span><br>    <span class="hljs-attr">minPoolSize:</span> <span class="hljs-number">1</span><br>  <br>  <span class="hljs-comment"># OpenGauss数据源</span><br>  <span class="hljs-attr">wenjw_db1:</span><br>    <span class="hljs-attr">url:</span> <span class="hljs-string">jdbc:postgresql://172.17.0.3:5432/wenjw_db1?useSSL=false&amp;serverTimezone=UTC&amp;characterEncoding=utf-8&amp;allowPublicKeyRetrieval=true</span><br>    <span class="hljs-attr">username:</span> <span class="hljs-string">ahwei</span><br>    <span class="hljs-attr">password:</span> <span class="hljs-string">Ahwei@123</span><br>    <span class="hljs-attr">connectionTimeoutMilliseconds:</span> <span class="hljs-number">30000</span><br>    <span class="hljs-attr">idleTimeoutMilliseconds:</span> <span class="hljs-number">60000</span><br>    <span class="hljs-attr">maxLifetimeMilliseconds:</span> <span class="hljs-number">1800000</span><br>    <span class="hljs-attr">maxPoolSize:</span> <span class="hljs-number">50</span><br>    <span class="hljs-attr">minPoolSize:</span> <span class="hljs-number">1</span><br><br><span class="hljs-comment"># 分片规则</span><br><span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-type">!SHARDING</span><br>    <span class="hljs-attr">tables:</span><br>      <span class="hljs-attr">wenjw_Stu:</span><br>        <span class="hljs-comment"># 逻辑表 wenjw_Stu 划分为以下两个实际表</span><br>        <span class="hljs-attr">actualDataNodes:</span> <span class="hljs-string">wenjw_db0.wenjw_Stu0,</span> <span class="hljs-string">wenjw_db1.wenjw_Stu1</span><br>        <span class="hljs-attr">tableStrategy:</span><br>          <span class="hljs-attr">standard:</span><br>            <span class="hljs-attr">shardingColumn:</span> <span class="hljs-string">Sno</span><br>            <span class="hljs-attr">shardingAlgorithmName:</span> <span class="hljs-string">wenjw_Stu_inline</span><br>        <span class="hljs-attr">keyGenerateStrategy:</span><br>          <span class="hljs-attr">column:</span> <span class="hljs-string">Sno</span><br>          <span class="hljs-attr">keyGeneratorName:</span> <span class="hljs-string">snowflake</span><br>      <span class="hljs-attr">wenjw_SC:</span><br>        <span class="hljs-comment"># 逻辑表 wenjw_SC 划分为以下两个实际表</span><br>        <span class="hljs-attr">actualDataNodes:</span> <span class="hljs-string">wenjw_db0.wenjw_SC0,</span> <span class="hljs-string">wenjw_db1.wenjw_SC1</span><br>        <span class="hljs-attr">tableStrategy:</span><br>          <span class="hljs-attr">standard:</span><br>            <span class="hljs-attr">shardingColumn:</span> <span class="hljs-string">Sno</span><br>            <span class="hljs-attr">shardingAlgorithmName:</span> <span class="hljs-string">wenjw_SC_inline</span><br>        <span class="hljs-attr">keyGenerateStrategy:</span><br>          <span class="hljs-attr">column:</span> <span class="hljs-string">Sno</span><br>          <span class="hljs-attr">keyGeneratorName:</span> <span class="hljs-string">snowflake</span><br><br>    <span class="hljs-comment"># 配置绑定表</span><br>    <span class="hljs-attr">bindingTables:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">wenjw_Stu</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">wenjw_SC</span><br><br>    <span class="hljs-comment"># 配置广播表</span><br>    <span class="hljs-attr">broadcastTables:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">wenjw_Cou</span><br><br>    <span class="hljs-comment"># 默认的分库策略</span><br>    <span class="hljs-attr">defaultDatabaseStrategy:</span><br>      <span class="hljs-attr">standard:</span><br>        <span class="hljs-attr">shardingColumn:</span> <span class="hljs-string">Sno</span><br>        <span class="hljs-attr">shardingAlgorithmName:</span> <span class="hljs-string">database_inline</span><br><br>    <span class="hljs-attr">defaultTableStrategy:</span><br>      <span class="hljs-attr">none:</span> &#123;&#125;<br><br>    <span class="hljs-comment"># 配置分库分表算法</span><br>    <span class="hljs-attr">shardingAlgorithms:</span><br>      <span class="hljs-attr">database_inline:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">INLINE</span><br>        <span class="hljs-attr">props:</span><br>          <span class="hljs-attr">algorithm-expression:</span> <span class="hljs-string">wenjw_db$&#123;Sno</span> <span class="hljs-string">%</span> <span class="hljs-number">2</span><span class="hljs-string">&#125;</span><br>          <span class="hljs-attr">allow-range-query-with-inline-sharding:</span> <span class="hljs-literal">true</span><br>      <span class="hljs-attr">wenjw_Stu_inline:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">INLINE</span><br>        <span class="hljs-attr">props:</span><br>          <span class="hljs-attr">algorithm-expression:</span> <span class="hljs-string">wenjw_Stu$&#123;Sno</span> <span class="hljs-string">%</span> <span class="hljs-number">2</span><span class="hljs-string">&#125;</span><br>          <span class="hljs-attr">allow-range-query-with-inline-sharding:</span> <span class="hljs-literal">true</span><br>      <span class="hljs-attr">wenjw_SC_inline:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">INLINE</span><br>        <span class="hljs-attr">props:</span><br>          <span class="hljs-attr">algorithm-expression:</span> <span class="hljs-string">wenjw_SC$&#123;Sno</span> <span class="hljs-string">%</span> <span class="hljs-number">2</span><span class="hljs-string">&#125;</span><br>          <span class="hljs-attr">allow-range-query-with-inline-sharding:</span> <span class="hljs-literal">true</span><br><br>    <span class="hljs-comment"># 配置主键生成器</span><br>    <span class="hljs-attr">keyGenerators:</span><br>      <span class="hljs-attr">snowflake:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">SNOWFLAKE</span><br><br>    <span class="hljs-comment"># 配置审计器</span><br>    <span class="hljs-attr">auditors:</span><br>      <span class="hljs-attr">sharding_key_required_auditor:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">DML_SHARDING_CONDITIONS</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-数据库建库建表"><a href="#4-数据库建库建表" class="headerlink" title="4.数据库建库建表"></a>4.数据库建库建表</h3><h4 id="4-1-MySQL"><a href="#4-1-MySQL" class="headerlink" title="4.1 MySQL"></a>4.1 MySQL</h4><ol>
+<li><p>进入 mysql 客户端：</p>
+<ul>
+<li><p>进入 docker 容器：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">docker exec -it ahwei_db0 bash<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>连接 MySQL 客户端：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">mysql -uroot -p123456<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/mysql.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>建库</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs mysql">create database wenjw_db0 charset = &#x27;utf8&#x27;;<br>use wenjw_db0;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>建表</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs mysql">CREATE TABLE wenjw_Stu0 (<br>    Sno INT PRIMARY KEY,<br>    Sname VARCHAR(100),<br>    Sdept VARCHAR(100),<br>    Stel VARCHAR(20),<br>    Sex VARCHAR(10),<br>    Sage INT,<br>    Saddr VARCHAR(200),<br>    Spost VARCHAR(10)<br>);<br><br>CREATE TABLE wenjw_Cou (<br>    Cno INT PRIMARY KEY,<br>    Cname VARCHAR(100),<br>    Cdept VARCHAR(100),<br>    Ctea VARCHAR(100),<br>    Cdate VARCHAR(20),<br>    CScore INT,<br>    Caddr VARCHAR(200)<br>);<br><br>CREATE TABLE wenjw_SC0 (<br>    Sno INT,<br>    Cno INT,<br>    Grade DECIMAL(4, 1) NOT NULL CHECK (Grade BETWEEN 0 AND 100),<br>    PRIMARY KEY (Sno, Cno),<br>    FOREIGN KEY (Sno) REFERENCES wenjw_Stu0(Sno),<br>    FOREIGN KEY (Cno) REFERENCES wenjw_Cou(Cno)<br>);<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>退出</p>
+<p><code>\q</code> 退出 MySQL，<code>exit</code> 退出容器：</p>
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/MySQL%E9%80%80%E5%87%BA.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+</ol>
+<h4 id="4-2-openGauss"><a href="#4-2-openGauss" class="headerlink" title="4.2 openGauss"></a>4.2 openGauss</h4><ol>
+<li><p>进入 openGauss 客户端：</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs applescript">docker exec -<span class="hljs-keyword">it</span> ahwei_db1 bash<br>gsql -d postgres -U omm<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>新建用户</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">USER</span> ahwei <span class="hljs-keyword">WITH</span> PASSWORD <span class="hljs-string">&#x27;Ahwei@123&#x27;</span>;<br><span class="hljs-keyword">GRANT</span> <span class="hljs-keyword">CONNECT</span> <span class="hljs-keyword">ON</span> DATABASE postgres <span class="hljs-keyword">TO</span> ahwei;<br><span class="hljs-keyword">GRANT</span> <span class="hljs-keyword">ALL</span> PRIVILEGES <span class="hljs-keyword">ON</span> SCHEMA public <span class="hljs-keyword">TO</span> ahwei;<br><span class="hljs-keyword">ALTER</span> <span class="hljs-keyword">USER</span> ahwei <span class="hljs-keyword">WITH</span> SYSADMIN;<br></code></pre></td></tr></table></figure>
+
+<p>退出后用 ahwei 连接：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">gsql -d postgres -U ahwei<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>建库</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span> DATABASE wenjw_db1 <span class="hljs-keyword">WITH</span> ENCODING <span class="hljs-string">&#x27;UTF8&#x27;</span>;<br>\c wenjw_db1<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>建表</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE TABLE</span> wenjw_Stu1 (<br>    Sno <span class="hljs-type">INT</span> <span class="hljs-keyword">PRIMARY KEY</span>,<br>    Sname <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">100</span>),<br>    Sdept <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">100</span>),<br>    Stel <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">20</span>),<br>    Sex <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">10</span>),<br>    Sage <span class="hljs-type">INT</span>,<br>    Saddr <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">200</span>),<br>    Spost <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">10</span>)<br>);<br><br><span class="hljs-keyword">CREATE TABLE</span> wenjw_Cou (<br>    Cno <span class="hljs-type">INT</span> <span class="hljs-keyword">PRIMARY KEY</span>,<br>    Cname <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">100</span>),<br>    Cdept <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">100</span>),<br>    Ctea <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">100</span>),<br>    Cdate <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">20</span>),<br>    CScore <span class="hljs-type">INT</span>,<br>    Caddr <span class="hljs-type">VARCHAR</span>(<span class="hljs-number">200</span>)<br>);<br><br><span class="hljs-keyword">CREATE TABLE</span> wenjw_SC1 (<br>    Sno <span class="hljs-type">INT</span>,<br>    Cno <span class="hljs-type">INT</span>,<br>    Grade <span class="hljs-type">DECIMAL</span>(<span class="hljs-number">4</span>, <span class="hljs-number">1</span>) <span class="hljs-keyword">NOT NULL</span> <span class="hljs-keyword">CHECK</span> (Grade <span class="hljs-keyword">BETWEEN</span> <span class="hljs-number">0</span> <span class="hljs-keyword">AND</span> <span class="hljs-number">100</span>),<br>    <span class="hljs-keyword">PRIMARY KEY</span> (Sno, Cno),<br>    <span class="hljs-keyword">FOREIGN KEY</span> (Sno) <span class="hljs-keyword">REFERENCES</span> wenjw_Stu1(Sno),<br>    <span class="hljs-keyword">FOREIGN KEY</span> (Cno) <span class="hljs-keyword">REFERENCES</span> wenjw_Cou(Cno)<br>);<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>退出</p>
+</li>
+</ol>
+<h3 id="5-插入数据"><a href="#5-插入数据" class="headerlink" title="5.插入数据"></a>5.插入数据</h3><p>在shardingsphere 文件夹的 bin&#x2F; 目录下，启动这个中间件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">./start.sh<br></code></pre></td></tr></table></figure>
+
+<p>如果看到如下日志就说明成功了：</p>
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/%E8%BF%9E%E6%8E%A5%E6%88%90%E5%8A%9F.png" srcset="/img/loading.gif" lazyload></p>
+<p>用 MySQL 客户端连接：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">mysql -h127.0.0.1 -P3307 -uroot -p123456<br></code></pre></td></tr></table></figure>
+
+<p>进入数据库后，插入数据：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql">use wenjw_db;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">INSERT INTO</span> wenjw_Stu (Sno, Sname, Sdept, Stel, Sex, Sage, Saddr, Spost) <span class="hljs-keyword">VALUES</span> <br>(<span class="hljs-number">2101</span>, <span class="hljs-string">&#x27;温家伟&#x27;</span>, <span class="hljs-string">&#x27;理学院&#x27;</span>, <span class="hljs-string">&#x27;19858180826&#x27;</span>, <span class="hljs-string">&#x27;男&#x27;</span>, <span class="hljs-number">19</span>, <span class="hljs-string">&#x27;山西省&#x27;</span>, <span class="hljs-string">&#x27;037000&#x27;</span>),<br>(<span class="hljs-number">2102</span>, <span class="hljs-string">&#x27;金娇薄&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;19157934071&#x27;</span>, <span class="hljs-string">&#x27;女&#x27;</span>, <span class="hljs-number">20</span>, <span class="hljs-string">&#x27;浙江省&#x27;</span>, <span class="hljs-string">&#x27;315000&#x27;</span>),<br>(<span class="hljs-number">2103</span>, <span class="hljs-string">&#x27;毛假发&#x27;</span>, <span class="hljs-string">&#x27;法学院&#x27;</span>, <span class="hljs-string">&#x27;15678901234&#x27;</span>, <span class="hljs-string">&#x27;女&#x27;</span>, <span class="hljs-number">21</span>, <span class="hljs-string">&#x27;美国&#x27;</span>, <span class="hljs-string">&#x27;510000&#x27;</span>),<br>(<span class="hljs-number">2104</span>, <span class="hljs-string">&#x27;曾辽远&#x27;</span>, <span class="hljs-string">&#x27;理学院&#x27;</span>, <span class="hljs-string">&#x27;13609876543&#x27;</span>, <span class="hljs-string">&#x27;男&#x27;</span>, <span class="hljs-number">20</span>, <span class="hljs-string">&#x27;山东市&#x27;</span>, <span class="hljs-string">&#x27;518000&#x27;</span>),<br>(<span class="hljs-number">2005</span>, <span class="hljs-string">&#x27;秋晓荷&#x27;</span>, <span class="hljs-string">&#x27;理学院&#x27;</span>, <span class="hljs-string">&#x27;13789012345&#x27;</span>, <span class="hljs-string">&#x27;女&#x27;</span>, <span class="hljs-number">21</span>, <span class="hljs-string">&#x27;浙江省&#x27;</span>, <span class="hljs-string">&#x27;610000&#x27;</span>),<br>(<span class="hljs-number">2006</span>, <span class="hljs-string">&#x27;朱甜甜&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;15908765432&#x27;</span>, <span class="hljs-string">&#x27;女&#x27;</span>, <span class="hljs-number">20</span>, <span class="hljs-string">&#x27;吉林省&#x27;</span>, <span class="hljs-string">&#x27;311100&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/sql1.png" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">INSERT INTO</span> wenjw_Cou (Cno, Cname, Cdept, Ctea, Cdate, CScore, Caddr) <span class="hljs-keyword">VALUES</span> <br>(<span class="hljs-number">12011</span>, <span class="hljs-string">&#x27;分布式数据库&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;范玉雷&#x27;</span>, <span class="hljs-string">&#x27;大三上&#x27;</span>, <span class="hljs-number">3</span>, <span class="hljs-string">&#x27;健行楼&#x27;</span>),<br>(<span class="hljs-number">12012</span>, <span class="hljs-string">&#x27;人工智能&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;高楠&#x27;</span>, <span class="hljs-string">&#x27;大三上&#x27;</span>, <span class="hljs-number">3</span>, <span class="hljs-string">&#x27;健行楼&#x27;</span>),<br>(<span class="hljs-number">12013</span>, <span class="hljs-string">&#x27;数字图像处理&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;刘盛&#x27;</span>, <span class="hljs-string">&#x27;大三上&#x27;</span>, <span class="hljs-number">2</span>, <span class="hljs-string">&#x27;广知楼&#x27;</span>),<br>(<span class="hljs-number">12014</span>, <span class="hljs-string">&#x27;数学建模&#x27;</span>, <span class="hljs-string">&#x27;理学院&#x27;</span>, <span class="hljs-string">&#x27;周凯&#x27;</span>, <span class="hljs-string">&#x27;大二下&#x27;</span>, <span class="hljs-number">3</span>, <span class="hljs-string">&#x27;健行楼&#x27;</span>),<br>(<span class="hljs-number">12015</span>, <span class="hljs-string">&#x27;运筹学&#x27;</span>, <span class="hljs-string">&#x27;理学院&#x27;</span>, <span class="hljs-string">&#x27;丁晓东&#x27;</span>, <span class="hljs-string">&#x27;大二下&#x27;</span>, <span class="hljs-number">4</span>, <span class="hljs-string">&#x27;广知楼&#x27;</span>),<br>(<span class="hljs-number">12016</span>, <span class="hljs-string">&#x27;数据结构&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;蒋莉&#x27;</span>, <span class="hljs-string">&#x27;大二上&#x27;</span>, <span class="hljs-number">4</span>, <span class="hljs-string">&#x27;郁文楼&#x27;</span>),<br>(<span class="hljs-number">12017</span>, <span class="hljs-string">&#x27;大学物理&#x27;</span>, <span class="hljs-string">&#x27;理学院&#x27;</span>, <span class="hljs-string">&#x27;施建青&#x27;</span>, <span class="hljs-string">&#x27;大一下&#x27;</span>, <span class="hljs-number">3</span>, <span class="hljs-string">&#x27;新教楼&#x27;</span>),<br>(<span class="hljs-number">12018</span>, <span class="hljs-string">&#x27;程序设计基础C&#x27;</span>, <span class="hljs-string">&#x27;计院&#x27;</span>, <span class="hljs-string">&#x27;蒋莉&#x27;</span>, <span class="hljs-string">&#x27;大一上&#x27;</span>, <span class="hljs-number">4</span>, <span class="hljs-string">&#x27;子良楼&#x27;</span>);<br></code></pre></td></tr></table></figure>
+
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/sql2.png" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">INSERT INTO</span> wenjw_SC (Sno, Cno, Grade) <span class="hljs-keyword">VALUES</span> <br>(<span class="hljs-number">2101</span>, <span class="hljs-number">12011</span>, <span class="hljs-number">100</span>),<br>(<span class="hljs-number">2101</span>, <span class="hljs-number">12012</span>, <span class="hljs-number">100</span>),<br>(<span class="hljs-number">2101</span>, <span class="hljs-number">12013</span>, <span class="hljs-number">100</span>),<br>(<span class="hljs-number">2101</span>, <span class="hljs-number">12014</span>, <span class="hljs-number">100</span>),<br>(<span class="hljs-number">2101</span>, <span class="hljs-number">12018</span>, <span class="hljs-number">100</span>),<br><br>(<span class="hljs-number">2102</span>, <span class="hljs-number">12011</span>, <span class="hljs-number">65</span>),<br>(<span class="hljs-number">2102</span>, <span class="hljs-number">12013</span>, <span class="hljs-number">55</span>),<br>(<span class="hljs-number">2102</span>, <span class="hljs-number">12015</span>, <span class="hljs-number">59</span>),<br>(<span class="hljs-number">2102</span>, <span class="hljs-number">12016</span>, <span class="hljs-number">58</span>),<br>(<span class="hljs-number">2102</span>, <span class="hljs-number">12017</span>, <span class="hljs-number">60</span>),<br><br>(<span class="hljs-number">2103</span>, <span class="hljs-number">12012</span>, <span class="hljs-number">60</span>),<br>(<span class="hljs-number">2103</span>, <span class="hljs-number">12013</span>, <span class="hljs-number">15</span>),<br>(<span class="hljs-number">2103</span>, <span class="hljs-number">12015</span>, <span class="hljs-number">55</span>),<br>(<span class="hljs-number">2103</span>, <span class="hljs-number">12017</span>, <span class="hljs-number">66</span>),<br>(<span class="hljs-number">2103</span>, <span class="hljs-number">12018</span>, <span class="hljs-number">55</span>),<br><br>(<span class="hljs-number">2104</span>, <span class="hljs-number">12014</span>, <span class="hljs-number">79</span>),<br>(<span class="hljs-number">2104</span>, <span class="hljs-number">12015</span>, <span class="hljs-number">80</span>),<br>(<span class="hljs-number">2104</span>, <span class="hljs-number">12016</span>, <span class="hljs-number">73</span>),<br>(<span class="hljs-number">2104</span>, <span class="hljs-number">12017</span>, <span class="hljs-number">66</span>),<br>(<span class="hljs-number">2104</span>, <span class="hljs-number">12018</span>, <span class="hljs-number">85</span>),<br><br>(<span class="hljs-number">2005</span>, <span class="hljs-number">12012</span>, <span class="hljs-number">70</span>),<br>(<span class="hljs-number">2005</span>, <span class="hljs-number">12013</span>, <span class="hljs-number">75</span>),<br>(<span class="hljs-number">2005</span>, <span class="hljs-number">12014</span>, <span class="hljs-number">81</span>),<br>(<span class="hljs-number">2005</span>, <span class="hljs-number">12016</span>, <span class="hljs-number">68</span>),<br>(<span class="hljs-number">2005</span>, <span class="hljs-number">12018</span>, <span class="hljs-number">58</span>),<br><br>(<span class="hljs-number">2006</span>, <span class="hljs-number">12013</span>, <span class="hljs-number">88</span>),<br>(<span class="hljs-number">2006</span>, <span class="hljs-number">12014</span>, <span class="hljs-number">96</span>),<br>(<span class="hljs-number">2006</span>, <span class="hljs-number">12015</span>, <span class="hljs-number">87</span>),<br>(<span class="hljs-number">2006</span>, <span class="hljs-number">12016</span>, <span class="hljs-number">92</span>),<br>(<span class="hljs-number">2006</span>, <span class="hljs-number">12018</span>, <span class="hljs-number">100</span>);<br></code></pre></td></tr></table></figure>
+
+<p><img src="/2025/04/20/%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E4%BA%9B%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E5%BB%BA/sql3.png" srcset="/img/loading.gif" lazyload></p>
+<p>其实每一条逻辑 SQL 都被转换成了对应的实际 SQL 在各自的数据库中执行。</p>
+<h2 id="三、注意"><a href="#三、注意" class="headerlink" title="三、注意"></a>三、注意</h2><ol>
+<li>我这里实际上是一台机器上模拟出两个节点配置的分布式数据库，实际如果是多台服务器（或服务器 + 虚拟机，参考我大三那次的 <a target="_blank" rel="noopener" href="https://github.com/ahhhhwei/Big-Data-Course-Repository/blob/master/%E5%A4%A7%E4%B8%89%E4%B8%8A/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%AE%9E%E9%AA%8C/%E5%AE%9E%E9%AA%8C1.pdf">文档</a>），应注意端口号开放问题</li>
+<li>我的服务器是阿里云的学生服务器，2核2G，因为开了两个 docker 容器，加上我用 vscode 连接的服务器，以及我下载过很多插件等等，服务器出现过死机的情况，我是在控制台重启后解决的</li>
+<li>日志文件中详细记录了 shardingsphere 的运行情况</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/database/" class="print-no-link">#database</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>异构数据库的分布式搭建</div>
+      <div>http://example.com/2025/11/26/异构数据库的分布式搭建/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>ahwei</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年11月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/11/05/%E7%A0%94%E7%A9%B6%E7%94%9F%E7%94%9F%E6%B4%BB/" title="研究生生活">
+                        <span class="hidden-mobile">研究生生活</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <i class="iconfont icon-github-fill"></i> <a href="https://github.com/ahhhhwei" target="_blank" rel="nofollow noopener"><span>github.com/ahhhhwei</span></a><br> <i class="iconfont icon-mail"></i> <a href="mailto:202103151422@zjut.edu.cn" target="_blank" rel="nofollow noopener"><span>202103151422@zjut.edu.cn</span></a>
+
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.11/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/tocbot@4.12.2/dist/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/anchor-js@4.3.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
