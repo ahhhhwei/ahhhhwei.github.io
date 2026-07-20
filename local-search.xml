@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>如何在GitHub上部署静态网页</title>
+    <link href="/2026/07/20/%E5%A6%82%E4%BD%95%E5%9C%A8GitHub%E4%B8%8A%E9%83%A8%E7%BD%B2%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5/"/>
+    <url>/2026/07/20/%E5%A6%82%E4%BD%95%E5%9C%A8GitHub%E4%B8%8A%E9%83%A8%E7%BD%B2%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5/</url>
+    
+    <content type="html"><![CDATA[<p>首先创建一个新的仓库，这个仓库的名字，就是网页的 <code>url</code> 的一部分：</p><p><img src="/2025/12/27/%E5%AF%92%E5%81%87%E5%AE%9E%E4%B9%A0%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E4%B8%8A%E9%83%A8%E7%BD%B2%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5/create.png"></p><p>然后上传网页的文件，<a href="https://github.com/ahhhhwei/Tetris/blob/master/index.html"><code>index.html</code></a> 必须直接位于仓库最外层，否则按照后面的根目录配置可能会出现 404。</p><p><img src="/2025/12/27/%E5%AF%92%E5%81%87%E5%AE%9E%E4%B9%A0%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E4%B8%8A%E9%83%A8%E7%BD%B2%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5/upload.png"></p><p><img src="/2025/12/27/%E5%AF%92%E5%81%87%E5%AE%9E%E4%B9%A0%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E4%B8%8A%E9%83%A8%E7%BD%B2%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5/choose.png"></p><p>最后，开启 GitHub Pages。进入仓库后：点击顶部的 Settings，在左侧找到 Pages，找到 Build and deployment</p><ul><li>将 Source 设置为：Deploy from a branch</li><li>在 Branch 中选择：master （刚才上传文件的那个分支）</li><li>目录选择：&#x2F; (root)</li></ul><p>点击 Save</p><p><img src="/2025/12/27/%E5%AF%92%E5%81%87%E5%AE%9E%E4%B9%A0%E9%9D%A2%E8%AF%95%E8%AE%B0%E5%BD%95/%E4%B8%8A%E9%83%A8%E7%BD%B2%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5/github-page.png"></p><p>至此，可以访问你的网页了：<a href="https://ahhhhwei.github.io/Tetris/">https://ahhhhwei.github.io/Tetris/</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>杂</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>github</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>论文投稿</title>
     <link href="/2026/07/15/%E8%AE%BA%E6%96%87%E6%8A%95%E7%A8%BF/"/>
     <url>/2026/07/15/%E8%AE%BA%E6%96%87%E6%8A%95%E7%A8%BF/</url>
